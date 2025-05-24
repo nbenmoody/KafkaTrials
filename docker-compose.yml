@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  producer:
+    image: producer
+    build:
+      context: ./src/Service.Producer
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - app-network
+
+  consumer:
+    image: consumer
+    build:
+      context: ./src/Service.Consumer
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
