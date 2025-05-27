@@ -51,7 +51,7 @@ services:
       - app-network
 
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: ghcr.io/kafbat/kafka-ui:latest
     depends_on:
       - kafka
     ports:
