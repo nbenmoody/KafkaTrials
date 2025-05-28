@@ -1,41 +1,61 @@
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Configuration;
+using Service.Producer.Services;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+class Program {
+    public static void Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
+    
+        builder.Services.AddOpenApi();
+        
+        var kafkaConfig = builder.Configuration.GetSection("Kafka");
+        var bootstrapServers = kafkaConfig["BootstrapServers"] ?? "kafka:29092";
+        var topicName = kafkaConfig["TopicName"] ?? "example-messages";
+        
+        builder.Services.AddSingleton(sp => new KafkaProducerService(
+            bootstrapServers,
+            topicName,
+            sp.GetRequiredService<ILogger<KafkaProducerService>>()));
+        
+        builder.Services.AddHostedService<MessagePublisherService>();
+    
+        var app = builder.Build();
+    
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+        }
+    
+        app.UseHttpsRedirection();
+    
+        
 
-var app = builder.Build();
+        MapEndpoints(app, kafkaService);
+    
+        app.Run();
+    }
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+    private static void MapEndpoints(WebApplication app, KafkaProducerService kafkaService) {
+        app.MapPost("/publish", async (string content, KafkaProducerService kafkaService) =>
+        {
+            var message = new Service.Producer.Models.Message
+            {
+                Content = content
+            };
+            
+            await kafkaService.ProduceMessageAsync(message);
+            
+            return Results.Ok(new { MessageId = message.Id, message.Content, message.Timestamp });
+        })
+        .WithName("PublishMessage");
 
-app.UseHttpsRedirection();
+        app.MapGet("/health", () =>
+        {
+            return Results.Ok;
+        })
+        .WithName("Health");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
 }
