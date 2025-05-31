@@ -18,6 +18,7 @@ class Program {
             sp.GetRequiredService<ILogger<KafkaProducerService>>()));
         
         builder.Services.AddHostedService<MessagePublisherService>();
+        builder.Services.AddHealthChecks();
     
         var app = builder.Build();
     
@@ -27,12 +28,7 @@ class Program {
         }
     
         app.MapControllers();
-        app.MapGet("/health", () =>
-            {
-                return Results.Ok;
-            })
-            .WithName("Health");
-    
+        app.MapHealthChecks("/health");
         app.Run();
     }
 }
