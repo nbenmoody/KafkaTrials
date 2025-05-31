@@ -1,6 +1,11 @@
+using System;
 using Confluent.Kafka;
 using Service.Consumer.Models;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Service.Consumer.Services
 {
