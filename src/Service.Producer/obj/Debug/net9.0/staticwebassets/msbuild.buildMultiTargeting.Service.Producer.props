@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../build/Service.Producer.props" />
-</Project>
