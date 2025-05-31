@@ -16,7 +16,6 @@ class Program {
             bootstrapServers,
             topicName,
             sp.GetRequiredService<ILogger<KafkaProducerService>>()));
-        
         builder.Services.AddHostedService<MessagePublisherService>();
         builder.Services.AddHealthChecks();
     
